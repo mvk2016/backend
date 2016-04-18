@@ -28,7 +28,6 @@
   "frameworks": {
     "dnx451": {
       "dependencies": {
-        "SocketIoClientDotNet": "0.9.13"
       }
     }
   },

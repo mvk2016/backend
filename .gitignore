@@ -215,3 +215,4 @@ ModelManifest.xml
 Connection.config
 
 api.param.dev.json
+src/api/Properties/launchSettings.json
