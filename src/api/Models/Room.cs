@@ -8,7 +8,6 @@ namespace api.Models
 {
     public class Room
     {
-        [ScaffoldColumn(false)]
         public int RoomId { get; set; }
 
         [Display(Name = "Room Name")]

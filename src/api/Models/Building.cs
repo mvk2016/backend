@@ -8,10 +8,11 @@ namespace api.Models
 {
     public class Building
     {
-        [ScaffoldColumn(false)]
+        [Required]
         public int BuildingId { get; set; }
 
         [Display(Name = "Building Name")]
+        [Required]
         public string BuildingName { get; set; }
 
         public virtual ICollection<Floor> Floors { get; set; }

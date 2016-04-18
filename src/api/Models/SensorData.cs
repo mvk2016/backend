@@ -8,8 +8,7 @@ namespace api.Models
 {
     public class SensorData
     {
-        [ScaffoldColumn(false)]
-        public int SensorId { get; set; }
+        public int SensorDataId { get; set; }
 
         [Display(Name = "Sensor Type")]
         public string SensorType { get; set; }

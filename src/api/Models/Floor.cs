@@ -8,8 +8,7 @@ namespace api.Models
 {
     public class Floor
     {
-        [ScaffoldColumn(false)]
-        public string FloorID { get; set; }
+        public string FloorId { get; set; }
 
         [Display(Name = "Floor name")]
         public string FloorName { get; set; }
