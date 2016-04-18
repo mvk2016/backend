@@ -7,7 +7,9 @@ using Microsoft.AspNet.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Data.Entity;
 using api.Interfaces;
+using api.Models;
 using api.Services;
 
 namespace api
@@ -20,12 +22,6 @@ namespace api
             var builder = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json");
 
-            if (env.IsEnvironment("Development"))
-            {
-                // This will push telemetry data through Application Insights pipeline faster, allowing you to view results immediately.
-                builder.AddApplicationInsightsSettings(developerMode: true);
-            }
-
             builder.AddEnvironmentVariables();
             Configuration = builder.Build().ReloadOnChanged("appsettings.json");
         }
@@ -35,12 +31,15 @@ namespace api
         // This method gets called by the runtime. Use this method to add services to the container
         public void ConfigureServices(IServiceCollection services)
         {
-            // Add framework services.
-            services.AddApplicationInsightsTelemetry(Configuration);
-
+            // Use MVC
             services.AddMvc();
 
-            services.AddEntityFramework();
+            var connection = Environment.GetEnvironmentVariable("SQLServerConnectionString") 
+                ?? @"Server=(localdb\mssqllocaldb;Database=Local.TestDb;Trusted_Connection=True;";
+
+            services.AddEntityFramework()
+                .AddSqlServer()
+                .AddDbContext<ApiContext>(options => options.UseSqlServer(connection));
 
             services.AddInstance<IEventHubConnector>(new EventHubConnector());
         }
@@ -50,12 +49,6 @@ namespace api
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
-
-            app.UseIISPlatformHandler();
-
-            app.UseApplicationInsightsRequestTelemetry();
-
-            app.UseApplicationInsightsExceptionTelemetry();
 
             app.UseStaticFiles();
 
