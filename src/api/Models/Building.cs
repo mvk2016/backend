@@ -9,7 +9,7 @@ namespace api.Models
     public class Building
     {
         [ScaffoldColumn(false)]
-        public int BuildingID { get; set; }
+        public int BuildingId { get; set; }
 
         [Display(Name = "Building Name")]
         public string BuildingName { get; set; }

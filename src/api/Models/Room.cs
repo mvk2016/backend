@@ -9,11 +9,11 @@ namespace api.Models
     public class Room
     {
         [ScaffoldColumn(false)]
-        public int RoomID { get; set; }
+        public int RoomId { get; set; }
 
         [Display(Name = "Room Name")]
         public string RoomName { get; set; }
 
-        public virtual ICollection<Sensor> Sensors { get; set; }
+        public virtual ICollection<SensorData> SensorData { get; set; }
     }
 }
