@@ -9,6 +9,8 @@ using api.Models;
 using api.Services;
 using Microsoft.AspNet.Diagnostics;
 using Microsoft.AspNet.Diagnostics.Entity;
+using System.Net.WebSockets;
+using api.Lib;
 
 namespace api
 {
@@ -49,6 +51,26 @@ namespace api
             loggerFactory.AddDebug();
 
             app.UseStaticFiles();
+
+            app.UseWebSockets();
+            app.Use(async (http, next) =>
+            {
+                if (http.WebSockets.IsWebSocketRequest)
+                {
+                    // Websocket request, get socket and add to handler.
+                    var webSocket = await http.WebSockets.AcceptWebSocketAsync();
+                    if (webSocket != null && webSocket.State == WebSocketState.Open)
+                    {
+                        WebSocketHandler.Add(webSocket);
+                    }
+                }
+                else
+                {
+                    // Not a websocket request, let api handle request
+                    await next();
+                }
+            });
+
             app.UseMvc();
             app.UseDatabaseErrorPage();
             app.UseDeveloperExceptionPage();
