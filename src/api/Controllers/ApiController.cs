@@ -107,7 +107,51 @@ namespace api.Controllers
             });
         }
 
-        // GET api/buildings/1/1
+        /// <summary>
+        /// <code>GET /api/buildings/:id/floors/:floor</code>
+        /// Provides a GeoJSON FeatureCollection of a given floor in a given building.
+        /// Each feature in the collection represents a room on the map and contains
+        /// metadata and sensor data properties, as well as geometry object which specifies
+        /// the room's geographical location on a world map using polygon coordinates.
+        /// 
+        /// Example response:
+        /// <code>
+        /// {
+        ///   "type": "FeatureCollection",
+        ///   "features": [
+        ///     {
+        ///       "type": "Feature",
+        ///       "properties": {
+        ///         "roomId": 1,
+        ///         "name": "Conference Room C",
+        ///         "data": [
+        ///           {
+        ///             "collected": "2016-04-19T11:30:00",
+        ///             "type": "temperature",
+        ///             "value": 296.3
+        ///           },
+        ///           ...
+        ///         ]
+        ///       },
+        ///       "geometry": {
+        ///         "type": "Polygon",
+        ///         "coordinates": [
+        ///           [
+        ///             18.073729835450649,
+        ///             59.34676929431086
+        ///           ],
+        ///           ...
+        ///         ]
+        ///       }
+        ///     }
+        ///   ]
+        /// }
+        /// </code>
+        /// </summary>
+        /// 
+        /// <param name="buildingId">Building identifier</param>
+        /// <param name="number">Floor number</param>
+        /// 
         [HttpGet("buildings/{buildingId}/floors/{number}")]
         public IActionResult GetRooms(int buildingId, int number)
         {
