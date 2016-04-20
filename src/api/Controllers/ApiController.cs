@@ -1,15 +1,11 @@
 ﻿using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using api.Models;
 using Microsoft.AspNet.Mvc;
-using Newtonsoft.Json;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
-
-// For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace api.Controllers
 {
@@ -23,26 +19,24 @@ namespace api.Controllers
     public class ApiController : Controller
     {
         private readonly ApiContext _context;
-        private readonly JsonSerializerSettings _apiJsonSettings = new JsonSerializerSettings
-        {
-            Formatting = Formatting.Indented,
-            ContractResolver = new CamelCasePropertyNamesContractResolver()
-        };
+        private readonly ILogger<ApiController> _logger;
 
         /// <summary>
         /// Initialize <see cref="ApiController"/>.
         /// </summary>
         /// 
         /// <param name="context">Database context injected by ASP.NET DI</param>
+        /// <param name="logger">Logger injected by ASP.NET DI</param>
         /// <seealso cref="Microsoft.Data.Entity.DbContext"/>
-        public ApiController(ApiContext context)
+        public ApiController(ApiContext context, ILogger<ApiController> logger)
         {
-            // Inject database context for queries
+            // Inject database context for queries, and logging utility
             _context = context;
+            _logger = logger;
         }
 
         /// <summary>
-        /// <code>/api/</code> throws HTTP 400.
+        /// <code>GET /api/</code> always throws HTTP 400.
         /// </summary>
         [HttpGet]
         public IActionResult DefaultAction()
@@ -50,23 +44,31 @@ namespace api.Controllers
             return HttpBadRequest();
         }
 
-        // GET: api/buildings        
         /// <summary>
-        /// <code>/api/buildings</code> lists all buildings.
+        /// <code>GET /api/buildings</code> lists all buildings.
         /// 
+        /// Example response:
+        /// <code>
+        /// {
+        ///   "buildings": [
+        ///     {
+        ///       "id": 871073,
+        ///       "name": "Keflavik"
+        ///     },
+        ///     ...
+        ///   ]
+        /// }
+        /// </code>
         /// </summary>
+        /// 
         /// <returns>IActionResult.</returns>
         [HttpGet("buildings")]
         public IActionResult GetBuildings()
         {
-            return Json(new
+            return new ObjectResult(new
             {
-                Buildings = _context.Buildings.Select(b => new Building
-                {
-                    Id = b.Id,
-                    Name = b.Name
-                }).ToList()
-            }, _apiJsonSettings);
+                buildings = _context.Buildings.Select(b => new { b.Id, b.Name }).ToList()
+            });
         }
 
         // GET: api/buildings/1
@@ -74,39 +76,40 @@ namespace api.Controllers
         public IActionResult GetFloors(int buildingId)
         {
             var buildings = _context.Buildings.Where(b => b.Id == buildingId);
-            return buildings.Any() ? (IActionResult) Json(buildings.First()) : HttpNotFound();
+
+            if (!buildings.Any()) return HttpNotFound();
+            return new ObjectResult(buildings.First());
         }
 
         // GET api/buildings/1/1
         [HttpGet("buildings/{buildingId}/floors/{number}")]
         public IActionResult GetRooms(int buildingId, int number)
         {
-            var rooms = _context.Rooms;
-            var buildings = _context
-                .Floors
-                .Where(f => f.BuildingId == buildingId && f.Number == number);
+            var floor = _context.Floors.Single(f => f.BuildingId == buildingId && f.Number == number);
+            var roomsOnFloor = _context.Rooms.Where(r => r.FloorId == floor.Id).ToList();
 
-            if (!buildings.Any())
-                return HttpNotFound();
-            var b = buildings.First();
-
-            var floor = buildings
-                .Join(rooms, f => f.Id, r => r.FloorId, (f, r) => new
-                {
-                    type = "Feature",
-                    properties = new
+            if (floor == null)       return HttpNotFound("Floor does not exist in building");
+            if (!roomsOnFloor.Any()) return HttpNotFound("Floor has no rooms");
+            
+            return new ObjectResult(new
+            {
+                type = "FeatureCollection",
+                features = roomsOnFloor.Select(r => new
                     {
-                        roomId = r.Id,
-                        name = r.Name,
-                    },
-                    geometry = new
-                    {
-                        type = "Polygon",
-                        coordinates = JObject.Parse(@"{""f"": [" + r.GeoJson + "]}")["f"]
-                    }
-                });
-
-            return new ObjectResult(new { type = "FeatureCollection", features = floor });
+                        type = "Feature",
+                        properties = new
+                        {
+                            roomId = r.Id,
+                            name = r.Name,
+                            data = _context.SensorData.Where(s => s.RoomId == r.Id)
+                        },
+                        geometry = new
+                        {
+                            type = "Polygon",
+                            coordinates = JArray.Parse(r.GeoJson)
+                        }
+                    })
+            });
         }
 
         // GET api/floors/floor2/rooms/room2
