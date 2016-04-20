@@ -66,8 +66,16 @@ namespace api.Controllers
         public IActionResult GetRooms(int buildingId, int number)
         {
             var rooms = _context.Rooms;
-            var buildings = _context
-                .Floors
+            var floors = _context
+                .Floors;
+
+            if (floors == null)
+            {
+                Console.WriteLine("floors is null");
+                return HttpNotFound();
+            }
+
+            var buildings = floors
                 .Where(f => f.BuildingId == buildingId && f.Number == number);
 
             if (!buildings.Any())
@@ -80,7 +88,7 @@ namespace api.Controllers
             // Always send back building data, set rooms to empty array if floor has no rooms
             return floor.Any()
                 ? Json(new { Floor = new { b.BuildingId, b.Number, Rooms = floor } })
-                : Json(new { Floor = new { b.BuildingId, b.Number, Rooms = new {} } });
+                : Json(new { Floor = new { b.BuildingId, b.Number, Rooms = "[]" } });
         }
 
         // GET api/floors/floor2/rooms/room2
@@ -99,8 +107,8 @@ namespace api.Controllers
 
             // Always send back room data, set data to empty array if room has no data
             return data.Any()
-                ? Json(new { Floor = new { r.Name, r.GeoJson, Data = data } })
-                : Json(new { Floor = new { r.Name, r.GeoJson, Data = new {} } });
+                ? Json(new { Floor = new { r.Id, r.Name, Data = data } })
+                : Json(new { Floor = new { r.Id, r.Name, Data = "[]" } });
         }
     }
 }
