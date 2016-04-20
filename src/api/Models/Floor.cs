@@ -8,10 +8,11 @@ namespace api.Models
 {
     public class Floor
     {
-        public string FloorId { get; set; }
+        public int Id { get; set; }
+        public int BuildingId { get; set; }
 
         [Display(Name = "Floor name")]
-        public string FloorName { get; set; }
+        public int Number { get; set; }
 
         public virtual ICollection<Room> Rooms { get; set; }
     }
