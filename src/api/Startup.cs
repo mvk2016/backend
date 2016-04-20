@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNet.Builder;
+﻿using Microsoft.AspNet.Builder;
 using Microsoft.AspNet.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,6 +7,8 @@ using Microsoft.Data.Entity;
 using api.Interfaces;
 using api.Models;
 using api.Services;
+using Microsoft.AspNet.Diagnostics;
+using Microsoft.AspNet.Diagnostics.Entity;
 
 namespace api
 {
@@ -34,13 +32,13 @@ namespace api
             // Use MVC
             services.AddMvc();
 
-            var connection = Environment.GetEnvironmentVariable("SQLServerConnectionString") 
-                ?? @"Server=(localdb\mssqllocaldb;Database=Local.TestDb;Trusted_Connection=True;";
-
+            // To connect to SQL Server, create a static class Config.cs with a
+            // ADO.NET connection string called SqlServerConnectionString
             services.AddEntityFramework()
                 .AddSqlServer()
-                .AddDbContext<ApiContext>(options => options.UseSqlServer(connection));
+                .AddDbContext<ApiContext>(options => options.UseSqlServer(Config.SqlServerConnectionString));
 
+            // Initialize Event Hub Connector as a singleton
             services.AddInstance<IEventHubConnector>(new EventHubConnector());
         }
 
@@ -51,10 +49,9 @@ namespace api
             loggerFactory.AddDebug();
 
             app.UseStaticFiles();
-
             app.UseMvc();
-
-            // app.
+            app.UseDatabaseErrorPage();
+            app.UseDeveloperExceptionPage();
         }
 
         // Entry point for the application.
