@@ -5,6 +5,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using api.Models;
 using Microsoft.AspNet.Mvc;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -20,6 +23,11 @@ namespace api.Controllers
     public class ApiController : Controller
     {
         private readonly ApiContext _context;
+        private readonly JsonSerializerSettings _apiJsonSettings = new JsonSerializerSettings
+        {
+            Formatting = Formatting.Indented,
+            ContractResolver = new CamelCasePropertyNamesContractResolver()
+        };
 
         /// <summary>
         /// Initialize <see cref="ApiController"/>.
@@ -33,13 +41,21 @@ namespace api.Controllers
             _context = context;
         }
 
+        /// <summary>
+        /// <code>/api/</code> throws HTTP 400.
+        /// </summary>
         [HttpGet]
         public IActionResult DefaultAction()
         {
             return HttpBadRequest();
         }
 
-        // GET: api/buildings
+        // GET: api/buildings        
+        /// <summary>
+        /// <code>/api/buildings</code> lists all buildings.
+        /// 
+        /// </summary>
+        /// <returns>IActionResult.</returns>
         [HttpGet("buildings")]
         public IActionResult GetBuildings()
         {
@@ -50,7 +66,7 @@ namespace api.Controllers
                     Id = b.Id,
                     Name = b.Name
                 }).ToList()
-            });
+            }, _apiJsonSettings);
         }
 
         // GET: api/buildings/1
@@ -66,16 +82,8 @@ namespace api.Controllers
         public IActionResult GetRooms(int buildingId, int number)
         {
             var rooms = _context.Rooms;
-            var floors = _context
-                .Floors;
-
-            if (floors == null)
-            {
-                Console.WriteLine("floors is null");
-                return HttpNotFound();
-            }
-
-            var buildings = floors
+            var buildings = _context
+                .Floors
                 .Where(f => f.BuildingId == buildingId && f.Number == number);
 
             if (!buildings.Any())
@@ -83,12 +91,29 @@ namespace api.Controllers
             var b = buildings.First();
 
             var floor = buildings
-                .Join(rooms, f => f.Id, r => r.FloorId, (f, r) => new { r.Id, r.Name, r.GeoJson });
+                .Join(rooms, f => f.Id, r => r.FloorId, (f, r) => new
+                {
+                    type = "Feature",
+                    properties = new
+                    {
+                        roomId = r.Id,
+                        name = r.Name,
+                    },
+                    geometry = new
+                    {
+                        type = "Polygon",
+                        coordinates = JObject.Parse(@"{""f"": [" + r.GeoJson + "]}")["f"]
+                    }
+                });
 
             // Always send back building data, set rooms to empty array if floor has no rooms
             return floor.Any()
-                ? Json(new { Floor = new { b.BuildingId, b.Number, Rooms = floor } })
-                : Json(new { Floor = new { b.BuildingId, b.Number, Rooms = "[]" } });
+                ? Json(new
+                {
+                    type = "FeatureCollection",
+                    features = floor
+                }, _apiJsonSettings)
+                : Json("[]");
         }
 
         // GET api/floors/floor2/rooms/room2
