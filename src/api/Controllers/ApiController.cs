@@ -106,14 +106,7 @@ namespace api.Controllers
                     }
                 });
 
-            // Always send back building data, set rooms to empty array if floor has no rooms
-            return floor.Any()
-                ? Json(new
-                {
-                    type = "FeatureCollection",
-                    features = floor
-                }, _apiJsonSettings)
-                : Json("[]");
+            return new ObjectResult(new { type = "FeatureCollection", features = floor });
         }
 
         // GET api/floors/floor2/rooms/room2

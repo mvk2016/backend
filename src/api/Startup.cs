@@ -11,6 +11,7 @@ using Microsoft.AspNet.Diagnostics;
 using Microsoft.AspNet.Diagnostics.Entity;
 using System.Net.WebSockets;
 using api.Lib;
+using Newtonsoft.Json.Serialization;
 
 namespace api
 {
@@ -31,8 +32,12 @@ namespace api
         // This method gets called by the runtime. Use this method to add services to the container
         public void ConfigureServices(IServiceCollection services)
         {
-            // Use MVC
-            services.AddMvc();
+            // Use MVC, and instruct it to print pretty JSON with camelCased property names
+            services.AddMvc().AddJsonOptions(opt =>
+            {
+                opt.SerializerSettings.Formatting = Newtonsoft.Json.Formatting.Indented;
+                opt.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
+            });
 
             // To connect to SQL Server, create a static class Config.cs with a
             // ADO.NET connection string called SqlServerConnectionString
@@ -55,20 +60,15 @@ namespace api
             app.UseWebSockets();
             app.Use(async (http, next) =>
             {
+                // For all WebSocket requests, get socket and add it to the handler
                 if (http.WebSockets.IsWebSocketRequest)
                 {
-                    // Websocket request, get socket and add to handler.
                     var webSocket = await http.WebSockets.AcceptWebSocketAsync();
                     if (webSocket != null && webSocket.State == WebSocketState.Open)
-                    {
                         WebSocketHandler.Add(webSocket);
-                    }
                 }
-                else
-                {
-                    // Not a websocket request, let api handle request
-                    await next();
-                }
+                // Not a WebSocket request, let API handle request
+                else await next();
             });
 
             app.UseMvc();
