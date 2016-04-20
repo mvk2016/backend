@@ -77,12 +77,10 @@ namespace api.Controllers
             var floor = buildings
                 .Join(rooms, f => f.Id, r => r.FloorId, (f, r) => new { r.Name, r.GeoJson });
 
-            return floor.Any() ? Json(new { Floor = new
-            {
-                BuildingId = b.BuildingId,
-                Number = b.Number,
-                Rooms = floor
-            } }) : Json("[]");
+            // Always send back building data, set rooms to empty array if floor has no rooms
+            return floor.Any()
+                ? Json(new { Floor = new { b.BuildingId, b.Number, Rooms = floor } })
+                : Json(new { Floor = new { b.BuildingId, b.Number, Rooms = new {} } });
         }
 
         // GET api/floors/floor2/rooms/room2
