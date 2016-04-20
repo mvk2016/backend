@@ -75,7 +75,7 @@ namespace api.Controllers
             var b = buildings.First();
 
             var floor = buildings
-                .Join(rooms, f => f.Id, r => r.FloorId, (f, r) => new { r.Name, r.GeoJson });
+                .Join(rooms, f => f.Id, r => r.FloorId, (f, r) => new { r.Id, r.Name, r.GeoJson });
 
             // Always send back building data, set rooms to empty array if floor has no rooms
             return floor.Any()
@@ -84,10 +84,23 @@ namespace api.Controllers
         }
 
         // GET api/floors/floor2/rooms/room2
-        [HttpGet("{buildingId}/{floorId}/{roomId}")]
-        public string GetRoom(int buildingId, int floorId, int roomId)
+        [HttpGet("rooms/{roomId}")]
+        public IActionResult GetRoom(int roomId)
         {
-            return "{fancy history object}";
+            var room = _context.Rooms.Where(rm => rm.Id == roomId);
+            if (!room.Any())
+                return HttpNotFound();
+            var r = room.First();
+
+            var data = _context
+                .SensorData
+                .Where(d => d.RoomId == roomId)
+                .ToList();
+
+            // Always send back room data, set data to empty array if room has no data
+            return data.Any()
+                ? Json(new { Floor = new { r.Name, r.GeoJson, Data = data } })
+                : Json(new { Floor = new { r.Name, r.GeoJson, Data = new {} } });
         }
     }
 }
