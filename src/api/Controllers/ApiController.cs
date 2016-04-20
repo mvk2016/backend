@@ -60,25 +60,51 @@ namespace api.Controllers
         /// }
         /// </code>
         /// </summary>
-        /// 
-        /// <returns>IActionResult.</returns>
         [HttpGet("buildings")]
         public IActionResult GetBuildings()
         {
-            return new ObjectResult(new
-            {
-                buildings = _context.Buildings.Select(b => new { b.Id, b.Name }).ToList()
-            });
+            return new ObjectResult(
+                new { buildings = _context.Buildings.Select(b => new { b.Id, b.Name }).ToList() });
         }
 
-        // GET: api/buildings/1
+        /// <summary>
+        /// <code>GET /api/buildings/:buildingId</code>
+        /// Lists all floors for a given building ID.
+        /// 
+        /// Example response:
+        /// <code>
+        /// {
+        ///   "floors": [
+        ///     {
+        ///       "id": 2,
+        ///       "buildingId": 871073,
+        ///       "number": 5,
+        ///       "rooms": null
+        ///     },
+        ///     ...
+        ///   ]
+        /// }
+        /// </code>
+        /// </summary>
+        /// 
+        /// <param name="buildingId">Building identifier</param>
+        /// 
         [HttpGet("buildings/{buildingId}")]
         public IActionResult GetFloors(int buildingId)
         {
-            var buildings = _context.Buildings.Where(b => b.Id == buildingId);
+            // Make sure the building actually exists
+            var building = _context.Buildings.Single(b => b.Id == buildingId);
+            if (building == null) return HttpNotFound("Building does not exist");
 
-            if (!buildings.Any()) return HttpNotFound();
-            return new ObjectResult(buildings.First());
+            // Return floor numbers as a JSON array
+            return new ObjectResult(new
+            {
+                buildingId,
+                floors = _context.Floors
+                                 .Where(f => f.BuildingId == building.Id)
+                                 .Select(f => f.Number)
+                                 .ToList()
+            });
         }
 
         // GET api/buildings/1/1
