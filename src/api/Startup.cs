@@ -7,17 +7,16 @@ using Microsoft.Data.Entity;
 using api.Interfaces;
 using api.Models;
 using api.Services;
-using Microsoft.AspNet.Diagnostics;
-using Microsoft.AspNet.Diagnostics.Entity;
 using System.Net.WebSockets;
 using api.Lib;
 using Newtonsoft.Json.Serialization;
+// ReSharper disable UnusedMember.Global
 
 namespace api
 {
     public class Startup
     {
-        public Startup(IHostingEnvironment env)
+        public Startup()
         {
             // Set up configuration sources.
             var builder = new ConfigurationBuilder()
@@ -50,13 +49,12 @@ namespace api
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, ILoggerFactory loggerFactory)
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
 
             app.UseStaticFiles();
-
             app.UseWebSockets();
             app.Use(async (http, next) =>
             {
@@ -72,8 +70,6 @@ namespace api
             });
 
             app.UseMvc();
-            app.UseDatabaseErrorPage();
-            app.UseDeveloperExceptionPage();
         }
 
         // Entry point for the application.
