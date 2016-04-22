@@ -187,10 +187,19 @@ namespace api.Controllers
             });
         }
 
-        // GET api/floors/floor2/rooms/room2
-        [HttpGet("rooms/{roomId}")]
-        public IActionResult GetRoom(int roomId)
+        /// <summary>
+        /// <code>GET /api/history/:roomId?start=2016-03-22T12:00:00[&end=2016-04-22T12:00:00]</code>
+        /// Returns calculated average data for a given room during a given time period.
+        /// Timespan is set using ISO 8601 formatted GET query string parameters:
+        /// <code>start</code> - Beginning of timespan (mandatory)
+        /// <code>end</code> - End of timespan (optional, defaults to DateTime.Now if no value supplied)
+        /// </summary>
+        /// 
+        /// <param name="roomId">Room ID number</param>
+        [HttpGet("history/{roomId}")]
+        public IActionResult GetHistory(int roomId)
         {
+            var start = Request.Query["start"];
             var room = _context.Rooms.Where(rm => rm.Id == roomId);
             if (!room.Any())
                 return HttpNotFound();
