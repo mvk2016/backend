@@ -157,6 +157,7 @@ namespace api.Controllers
         {
             var floor = _context.Floors.Single(f => f.BuildingId == buildingId && f.Number == number);
             var roomsOnFloor = _context.Rooms.Where(r => r.FloorId == floor.Id).ToList();
+            var types = _context.SensorData.Select(d => d.Type).Distinct().ToList();
 
             if (floor == null)       return HttpNotFound("Floor does not exist in building");
             if (!roomsOnFloor.Any()) return HttpNotFound("Floor has no rooms");
@@ -171,7 +172,11 @@ namespace api.Controllers
                         {
                             roomId = r.Id,
                             name = r.Name,
-                            data = _context.SensorData.Where(s => s.RoomId == r.Id)
+                            data = types.Select(t => _context.SensorData
+                                        .Where(s => s.RoomId == r.Id && s.Type == t)
+                                        .Select(s => new { s.Type, s.Value, s.Collected })
+                                        .OrderByDescending(s => s.Collected)
+                                        .Take(1))
                         },
                         geometry = new
                         {
