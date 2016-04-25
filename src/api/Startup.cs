@@ -45,7 +45,7 @@ namespace api
                 .AddDbContext<ApiContext>(options => options.UseSqlServer(Config.SqlServerConnectionString));
 
             // Initialize Event Hub Connector as a singleton
-            services.AddInstance<IEventHubConnector>(new EventHubConnector());
+            services.AddInstance<IRealTimeConnector>(new ServiceBusQueueConnector());
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline

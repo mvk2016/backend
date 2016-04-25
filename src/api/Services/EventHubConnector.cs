@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace api.Services
 {
-    public class EventHubConnector : IEventHubConnector
+    public class EventHubConnector : IRealTimeConnector
     {
         public EventHubConnector()
         {
