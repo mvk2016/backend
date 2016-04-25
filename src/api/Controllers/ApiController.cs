@@ -194,7 +194,20 @@ namespace api.Controllers
         /// <code>end</code> - End of timespan (defaults to DateTime.Now if no value supplied)
         /// </summary>
         /// 
-        /// 
+        /// Example response:
+        /// <code>
+        /// {
+        ///   "labels": ["Apr 19", "Apr 21", "Apr 22", "Apr 25"],
+        ///   "datasets": [
+        ///     {
+        ///       "fillColor": "rgba(220,220,220,0.2)",
+        ///       "strokeColor": "rgba(220,220,220,1)",
+        ///       ...
+        ///       "data": [25.0, 21.0, 24.0, 22.8]
+        ///     }
+        ///   ]
+        /// }
+        /// </code>
         /// 
         /// <param name="roomId">Room ID number</param>
         /// <param name="type">Data type (e.g. humidity)</param>
@@ -247,7 +260,7 @@ namespace api.Controllers
                 // Return Chart.js compliant response
                 return new ObjectResult(new
                 {
-                    labels = new List<object> { data.Keys.Select(d => d.ToString("MMM dd")) },
+                    labels = data.Keys.Select(d => d.ToString("MMM dd")),
                     datasets = new List<object>
                     {
                         new
