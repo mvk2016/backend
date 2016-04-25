@@ -173,7 +173,8 @@ namespace api.Controllers
                             roomId = r.Id,
                             name = r.Name,
                             data = types.Select(t => _context.SensorData
-                                        .Where(s => s.RoomId == r.Id && s.Type == t)
+                                        .Where(s => s.RoomId == r.Id)
+                                        .Where(s => s.Type == t)
                                         .Select(s => new { s.Type, s.Value, s.Collected })
                                         .OrderByDescending(s => s.Collected)
                                         .Take(1))
@@ -196,24 +197,58 @@ namespace api.Controllers
         /// </summary>
         /// 
         /// <param name="roomId">Room ID number</param>
-        [HttpGet("history/{roomId}")]
-        public IActionResult GetHistory(int roomId)
+        /// <param name="type">Data type (e.g. humidity)</param>
+        [HttpGet("history/{roomId}/{type}")]
+        public IActionResult GetHistory(int roomId, string type)
         {
-            var start = Request.Query["start"];
-            var room = _context.Rooms.Where(rm => rm.Id == roomId);
-            if (!room.Any())
-                return HttpNotFound();
-            var r = room.First();
+            // Try to construct a date
+            try
+            {
+                var startDate = DateTime.Parse(Request.Query["start"]);
+                var endDate = string.IsNullOrEmpty(Request.Query["end"])
+                            ? DateTime.Parse(Request.Query["end"])
+                            : DateTime.Now;
+                var room = _context.Rooms.Single(rm => rm.Id == roomId);
+                Object data;
 
-            var data = _context
-                .SensorData
-                .Where(d => d.RoomId == roomId)
-                .ToList();
+                if ((endDate - startDate).TotalHours >= 72)
+                {
+                    data = _context
+                        .SensorData
+                        .Where(d => d.RoomId == room.Id)
+                        .Where(d => d.Collected > startDate)
+                        .Where(d => d.Collected < endDate)
+                        .Where(d => d.Type == type)
+                        .GroupBy(d => new DateTime(d.Collected.Year, d.Collected.Month, d.Collected.Day))
+                        .Select(d => d.Average(s => s.Value))
+                        .ToList();
+                }
+                else
+                {
+                    data = _context
+                        .SensorData
+                        .Where(d => d.RoomId == room.Id)
+                        .Where(d => d.Collected > startDate)
+                        .Where(d => d.Collected < endDate)
+                        .Where(d => d.Type == type)
+                        .ToList();
+                }
 
-            // Always send back room data, set data to empty array if room has no data
-            return data.Any()
-                ? Json(new { Floor = new { r.Id, r.Name, Data = data } })
-                : Json(new { Floor = new { r.Id, r.Name, Data = "[]" } });
+                return new ObjectResult(new
+                {
+                    data
+                });
+
+                // Always send back room data, set data to empty array if room has no data
+                /* return data.Any()
+                    ? Json(new { Floor = new { r.Id, r.Name, Data = data } })
+                    : Json(new { Floor = new { r.Id, r.Name, Data = "[]" } }); */
+            }
+            catch (FormatException) { return HttpBadRequest("Dates must be ISO 8601 strings."); }
+            catch (InvalidOperationException) { return HttpNotFound("Room does not exist."); }
+            catch (Exception ex) { return HttpBadRequest(ex.Message); }
+
+            return HttpBadRequest();
         }
     }
 }
