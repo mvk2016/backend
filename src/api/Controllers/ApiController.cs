@@ -69,15 +69,8 @@ namespace api.Controllers
         /// Example response:
         /// <code>
         /// {
-        ///   "floors": [
-        ///     {
-        ///       "id": 2,
-        ///       "buildingId": 871073,
-        ///       "number": 5,
-        ///       "rooms": null
-        ///     },
-        ///     ...
-        ///   ]
+        ///   "buildingId": 871073,
+        ///   "floors": [5, 6]
         /// }
         /// </code>
         /// </summary>
