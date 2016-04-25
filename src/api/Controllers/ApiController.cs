@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Linq;
-using System.Collections;
 using System.Collections.Generic;
 using api.Models;
 using Microsoft.AspNet.Mvc;
-using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 
 namespace api.Controllers
@@ -14,25 +12,22 @@ namespace api.Controllers
     /// All routes begin with <code>/api/</code>
     /// </summary>
     /// 
-    /// <seealso cref="Microsoft.AspNet.Mvc.Controller" />
+    /// <seealso cref="Controller" />
     [Route("api")]
     public class ApiController : Controller
     {
         private readonly ApiContext _context;
-        private readonly ILogger<ApiController> _logger;
 
         /// <summary>
         /// Initialize <see cref="ApiController"/>.
         /// </summary>
         /// 
         /// <param name="context">Database context injected by ASP.NET DI</param>
-        /// <param name="logger">Logger injected by ASP.NET DI</param>
         /// <seealso cref="Microsoft.Data.Entity.DbContext"/>
-        public ApiController(ApiContext context, ILogger<ApiController> logger)
+        public ApiController(ApiContext context)
         {
             // Inject database context for queries, and logging utility
             _context = context;
-            _logger = logger;
         }
 
         /// <summary>
@@ -189,12 +184,17 @@ namespace api.Controllers
         }
 
         /// <summary>
-        /// <code>GET /api/history/:roomId?start=2016-03-22T12:00:00[&end=2016-04-22T12:00:00]</code>
+        /// <code>GET /api/history/:roomId?start=2016-03-22T12:00:00&[end=2016-04-22T12:00:00]</code>
         /// Returns calculated average data for a given room during a given time period.
+        /// Data values are averages calculated on hourly basis for timespans under 100 hours,
+        /// and daily basis for timespans of 100 hours or longer.
+        /// 
         /// Timespan is set using ISO 8601 formatted GET query string parameters:
-        /// <code>start</code> - Beginning of timespan (mandatory)
-        /// <code>end</code> - End of timespan (optional, defaults to DateTime.Now if no value supplied)
+        /// <code>start</code> - Beginning of timespan (defaults to Now - 1 week if no value supplied)
+        /// <code>end</code> - End of timespan (defaults to DateTime.Now if no value supplied)
         /// </summary>
+        /// 
+        /// 
         /// 
         /// <param name="roomId">Room ID number</param>
         /// <param name="type">Data type (e.g. humidity)</param>
@@ -204,51 +204,68 @@ namespace api.Controllers
             // Try to construct a date
             try
             {
-                var startDate = DateTime.Parse(Request.Query["start"]);
-                var endDate = string.IsNullOrEmpty(Request.Query["end"])
+                // Grab requested Room and create empty object for final data
+                var room = _context.Rooms.Single(rm => rm.Id == roomId);
+                Dictionary<DateTime, double> data;
+
+                // Construct date range from timespans, 
+                var startDate = !string.IsNullOrEmpty(Request.Query["start"])
+                            ? DateTime.Parse(Request.Query["start"])
+                            : DateTime.Now.AddDays(-7);
+                var endDate = !string.IsNullOrEmpty(Request.Query["end"])
                             ? DateTime.Parse(Request.Query["end"])
                             : DateTime.Now;
-                var room = _context.Rooms.Single(rm => rm.Id == roomId);
-                Object data;
 
-                if ((endDate - startDate).TotalHours >= 72)
+                // TODO: Improve once Entity Framework Core gets GROUP BY support
+                // Averages are calculated on the same base data, which as of EF Core RC1 Final
+                // cannot translate .GroupBy() into SQL queries, hence no performance degradation
+                // occurs when processing the raw data in C# like this. For larger datasets,
+                // and production uses, make sure .GroupBy() is translated into an actual SQL GROUP BY.
+                var rawData = _context
+                    .SensorData
+                    .Where(d => d.RoomId == room.Id)
+                    .Where(d => d.Collected > startDate)
+                    .Where(d => d.Collected < endDate)
+                    .Where(d => d.Type == type);
+
+                // For timespans greater than ~4 days, group by day instead of by hour
+                if ((endDate - startDate).TotalHours >= 100)
                 {
-                    data = _context
-                        .SensorData
-                        .Where(d => d.RoomId == room.Id)
-                        .Where(d => d.Collected > startDate)
-                        .Where(d => d.Collected < endDate)
-                        .Where(d => d.Type == type)
+                    data = rawData
                         .GroupBy(d => new DateTime(d.Collected.Year, d.Collected.Month, d.Collected.Day))
-                        .Select(d => d.Average(s => s.Value))
-                        .ToList();
+                        .Select(d => new { date = d.Key, value = d.Average(s => s.Value) })
+                        .ToDictionary(d => d.date, d => d.value);
                 }
                 else
                 {
-                    data = _context
-                        .SensorData
-                        .Where(d => d.RoomId == room.Id)
-                        .Where(d => d.Collected > startDate)
-                        .Where(d => d.Collected < endDate)
-                        .Where(d => d.Type == type)
-                        .ToList();
+                    data = rawData
+                        .GroupBy(d => new DateTime(d.Collected.Year, d.Collected.Month, d.Collected.Day, d.Collected.Hour, 0, 0))
+                        .Select(d => new { date = d.Key, value = d.Average(s => s.Value) })
+                        .ToDictionary(d => d.date, d => d.value);
                 }
 
+                // Return Chart.js compliant response
                 return new ObjectResult(new
                 {
-                    data
+                    labels = new List<object> { data.Keys.Select(d => d.ToString("MMM dd")) },
+                    datasets = new List<object>
+                    {
+                        new
+                        {
+                            fillColor = "rgba(220,220,220,0.2)",
+                            strokeColor = "rgba(220,220,220,1)",
+                            pointColor = "rgba(220,220,220,1)",
+                            pointStrokeColor = "#fff",
+                            pointHighlightFill = "#fff",
+                            pointHighlightStroke = "rgba(220,220,220,1)",
+                            data = data.Values
+                        }
+                    }
                 });
-
-                // Always send back room data, set data to empty array if room has no data
-                /* return data.Any()
-                    ? Json(new { Floor = new { r.Id, r.Name, Data = data } })
-                    : Json(new { Floor = new { r.Id, r.Name, Data = "[]" } }); */
             }
             catch (FormatException) { return HttpBadRequest("Dates must be ISO 8601 strings."); }
             catch (InvalidOperationException) { return HttpNotFound("Room does not exist."); }
-            catch (Exception ex) { return HttpBadRequest(ex.Message); }
-
-            return HttpBadRequest();
+            catch (Exception ex) { return HttpBadRequest("Exception: " + ex + " " + ex.Message); }
         }
     }
 }
