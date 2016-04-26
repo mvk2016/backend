@@ -177,7 +177,7 @@ namespace api.Controllers
         }
 
         /// <summary>
-        /// <code>GET /api/history/:roomId?start=2016-03-22T12:00:00&[end=2016-04-22T12:00:00]</code>
+        /// <code>GET /api/history/:roomId/:type?start=2016-03-22T12:00:00&[end=2016-04-22T12:00:00]</code>
         /// Returns calculated average data for a given room during a given time period.
         /// Data values are averages calculated on hourly basis for timespans under 100 hours,
         /// and daily basis for timespans of 100 hours or longer.
@@ -191,14 +191,7 @@ namespace api.Controllers
         /// <code>
         /// {
         ///   "labels": ["Apr 19", "Apr 21", "Apr 22", "Apr 25"],
-        ///   "datasets": [
-        ///     {
-        ///       "fillColor": "rgba(220,220,220,0.2)",
-        ///       "strokeColor": "rgba(220,220,220,1)",
-        ///       ...
-        ///       "data": [25.0, 21.0, 24.0, 22.8]
-        ///     }
-        ///   ]
+        ///   "data": [25.0, 21.0, 24.0, 22.8]
         /// }
         /// </code>
         /// 
@@ -250,23 +243,11 @@ namespace api.Controllers
                         .ToDictionary(d => d.date, d => d.value);
                 }
 
-                // Return Chart.js compliant response
+                // Return chart compliant response
                 return new ObjectResult(new
                 {
                     labels = data.Keys.Select(d => d.ToString("MMM dd")),
-                    datasets = new List<object>
-                    {
-                        new
-                        {
-                            fillColor = "rgba(220,220,220,0.2)",
-                            strokeColor = "rgba(220,220,220,1)",
-                            pointColor = "rgba(220,220,220,1)",
-                            pointStrokeColor = "#fff",
-                            pointHighlightFill = "#fff",
-                            pointHighlightStroke = "rgba(220,220,220,1)",
-                            data = data.Values
-                        }
-                    }
+                    data = data.Values
                 });
             }
             catch (FormatException) { return HttpBadRequest("Dates must be ISO 8601 strings."); }

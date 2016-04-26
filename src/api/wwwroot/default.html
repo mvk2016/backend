@@ -172,7 +172,7 @@
             <a class="anchor" id="a3228267d0237593221919c4826a942f8"></a>
             <div class="panel panel-default active">
                 <div class="panel-heading">
-                    <code>GET /api/history/:roomId?start=2016-03-22T12:00:00&amp;[end=2016-04-22T12:00:00]</code>
+                    <code>GET /api/history/:roomId/:type?start=2016-03-22T12:00:00&amp;[end=2016-04-22T12:00:00]</code>
                 </div><div class="panel-body">
 
                 <p><strong>Returns calculated average data for a given room during a given time period.</strong></p>
@@ -187,14 +187,7 @@
 
 <pre><code class="json">{
   "labels": ["Apr 19", "Apr 21", "Apr 22", "Apr 25"],
-  "datasets": [
-    {
-      "fillColor": "rgba(220,220,220,0.2)",
-      "strokeColor": "rgba(220,220,220,1)",
-      ...
-      "data": [25.0, 21.0, 24.0, 22.8]
-    }
-  ]
+  "data": [25.0, 21.0, 24.0, 22.8]
 }</code></pre>
 
                 <hr />
