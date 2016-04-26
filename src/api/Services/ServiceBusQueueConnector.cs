@@ -1,13 +1,13 @@
 ﻿using System;
-using Microsoft.ServiceBus.Messaging;
 using api.Interfaces;
 using api.Lib;
+using Microsoft.ServiceBus.Messaging;
 
 namespace api.Services
 {
     /// <summary>
-    /// Forwards messages from an Azure Service Bus Queue to connected
-    /// WebSocket clients using WebSocketHandler.
+    ///     Forwards messages from an Azure Service Bus Queue to connected
+    ///     WebSocket clients using WebSocketHandler.
     /// </summary>
     /// <seealso cref="IRealTimeConnector" />
     public class ServiceBusQueueConnector : IRealTimeConnector
@@ -18,7 +18,7 @@ namespace api.Services
         }
 
         /// <summary>
-        /// Connects this instance.
+        ///     Connects this instance.
         /// </summary>
         public void Connect()
         {

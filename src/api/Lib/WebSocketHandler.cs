@@ -10,10 +10,10 @@ namespace api.Lib
 {
     public class WebSocketHandler
     {
-        private static ConcurrentBag<WebSocket> _sockets = new ConcurrentBag<WebSocket>();
+        private static readonly ConcurrentBag<WebSocket> _sockets = new ConcurrentBag<WebSocket>();
 
         /// <summary>
-        /// Add a websocket to the bag of websockets.
+        ///     Add a websocket to the bag of websockets.
         /// </summary>
         /// <param name="webSocket"></param>
         internal static void Add(WebSocket webSocket)
@@ -22,18 +22,26 @@ namespace api.Lib
         }
 
         /// <summary>
-        /// Broadcast a message to every open websocket in the bag.
+        ///     Broadcast a message to every open websocket in the bag.
         /// </summary>
         /// <param name="message"></param>
-        internal static async void Broadcast(String message)
+        internal static async void Broadcast(string message)
         {
             var token = CancellationToken.None;
             var type = WebSocketMessageType.Text;
             var data = Encoding.UTF8.GetBytes(message);
-            var buffer = new ArraySegment<Byte>(data);
+            var buffer = new ArraySegment<byte>(data);
 
-            await Task.WhenAll(_sockets.Where(s => s.State == WebSocketState.Open)
-                                       .Select(s => s.SendAsync(buffer, type, true, token)));
+            try
+            {
+                await Task.WhenAll(_sockets.Where(s => s.State == WebSocketState.Open)
+                    .Select(s => s.SendAsync(buffer, type, true, token)));
+            }
+            catch
+            {
+                // Socket didn't close gracefully, no clean way to handle this.
+                // TODO: Do this cleanly.
+            }
         }
     }
 }

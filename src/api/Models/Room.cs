@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace api.Models
 {
@@ -13,6 +10,7 @@ namespace api.Models
 
         [Display(Name = "Room Name")]
         public string Name { get; set; }
+
         public string GeoJson { get; set; }
 
         public virtual ICollection<SensorData> SensorData { get; set; }

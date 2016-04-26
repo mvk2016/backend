@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 using api.Models;
 using Microsoft.AspNet.Mvc;
 using Newtonsoft.Json.Linq;
@@ -8,10 +8,9 @@ using Newtonsoft.Json.Linq;
 namespace api.Controllers
 {
     /// <summary>
-    /// Provides API endpoints for fetching building metadata, floor plans and sensor data.
-    /// All routes begin with <code>/api/</code>
+    ///     Provides API endpoints for fetching building metadata, floor plans and sensor data.
+    ///     All routes begin with <code>/api/</code>
     /// </summary>
-    /// 
     /// <seealso cref="Controller" />
     [Route("api")]
     public class ApiController : Controller
@@ -19,11 +18,10 @@ namespace api.Controllers
         private readonly ApiContext _context;
 
         /// <summary>
-        /// Initialize <see cref="ApiController"/>.
+        ///     Initialize <see cref="ApiController" />.
         /// </summary>
-        /// 
         /// <param name="context">Database context injected by ASP.NET DI</param>
-        /// <seealso cref="Microsoft.Data.Entity.DbContext"/>
+        /// <seealso cref="Microsoft.Data.Entity.DbContext" />
         public ApiController(ApiContext context)
         {
             // Inject database context for queries, and logging utility
@@ -31,7 +29,7 @@ namespace api.Controllers
         }
 
         /// <summary>
-        /// <code>GET /api/</code> always throws HTTP 400.
+        ///     <code>GET /api/</code> always throws HTTP 400.
         /// </summary>
         [HttpGet]
         public IActionResult DefaultAction()
@@ -40,10 +38,9 @@ namespace api.Controllers
         }
 
         /// <summary>
-        /// <code>GET /api/buildings</code> lists all buildings.
-        /// 
-        /// Example response:
-        /// <code>
+        ///     <code>GET /api/buildings</code> lists all buildings.
+        ///     Example response:
+        ///     <code>
         /// {
         ///   "buildings": [
         ///     {
@@ -59,24 +56,21 @@ namespace api.Controllers
         public IActionResult GetBuildings()
         {
             return new ObjectResult(
-                new { buildings = _context.Buildings.Select(b => new { b.Id, b.Name }).ToList() });
+                new {buildings = _context.Buildings.Select(b => new {b.Id, b.Name}).ToList()});
         }
 
         /// <summary>
-        /// <code>GET /api/buildings/:buildingId</code>
-        /// Lists all floors for a given building ID.
-        /// 
-        /// Example response:
-        /// <code>
+        ///     <code>GET /api/buildings/:buildingId</code>
+        ///     Lists all floors for a given building ID.
+        ///     Example response:
+        ///     <code>
         /// {
         ///   "buildingId": 871073,
         ///   "floors": [5, 6]
         /// }
         /// </code>
         /// </summary>
-        /// 
         /// <param name="buildingId">Building identifier</param>
-        /// 
         [HttpGet("buildings/{buildingId}")]
         public IActionResult GetFloors(int buildingId)
         {
@@ -89,21 +83,20 @@ namespace api.Controllers
             {
                 buildingId,
                 floors = _context.Floors
-                                 .Where(f => f.BuildingId == building.Id)
-                                 .Select(f => f.Number)
-                                 .ToList()
+                    .Where(f => f.BuildingId == building.Id)
+                    .Select(f => f.Number)
+                    .ToList()
             });
         }
 
         /// <summary>
-        /// <code>GET /api/buildings/:buildingId/floors/:number</code>
-        /// Provides a GeoJSON FeatureCollection of a given floor in a given building.
-        /// Each feature in the collection represents a room on the map and contains
-        /// metadata and sensor data properties, as well as geometry object which specifies
-        /// the room's geographical location on a world map using polygon coordinates.
-        /// 
-        /// Example response:
-        /// <code>
+        ///     <code>GET /api/buildings/:buildingId/floors/:number</code>
+        ///     Provides a GeoJSON FeatureCollection of a given floor in a given building.
+        ///     Each feature in the collection represents a room on the map and contains
+        ///     metadata and sensor data properties, as well as geometry object which specifies
+        ///     the room's geographical location on a world map using polygon coordinates.
+        ///     Example response:
+        ///     <code>
         /// {
         ///   "type": "FeatureCollection",
         ///   "features": [
@@ -138,10 +131,8 @@ namespace api.Controllers
         /// }
         /// </code>
         /// </summary>
-        /// 
         /// <param name="buildingId">Building identifier</param>
         /// <param name="number">Floor number</param>
-        /// 
         [HttpGet("buildings/{buildingId}/floors/{number}")]
         public IActionResult GetRooms(int buildingId, int number)
         {
@@ -149,46 +140,44 @@ namespace api.Controllers
             var roomsOnFloor = _context.Rooms.Where(r => r.FloorId == floor.Id).ToList();
             var types = _context.SensorData.Select(d => d.Type).Distinct().ToList();
 
-            if (floor == null)       return HttpNotFound("Floor does not exist in building");
+            if (floor == null) return HttpNotFound("Floor does not exist in building");
             if (!roomsOnFloor.Any()) return HttpNotFound("Floor has no rooms");
-            
+
             return new ObjectResult(new
             {
                 type = "FeatureCollection",
                 features = roomsOnFloor.Select(r => new
+                {
+                    type = "Feature",
+                    properties = new
                     {
-                        type = "Feature",
-                        properties = new
-                        {
-                            roomId = r.Id,
-                            name = r.Name,
-                            data = types.Select(t => _context.SensorData
-                                        .Where(s => s.RoomId == r.Id)
-                                        .Where(s => s.Type == t)
-                                        .Select(s => new { s.Type, s.Value, s.Collected })
-                                        .OrderByDescending(s => s.Collected)
-                                        .First())
-                        },
-                        geometry = new
-                        {
-                            type = "Polygon",
-                            coordinates = new List<object> {JArray.Parse(r.GeoJson) }
-                        }
-                    })
+                        roomId = r.Id,
+                        name = r.Name,
+                        data = types.Select(t => _context.SensorData
+                            .Where(s => s.RoomId == r.Id)
+                            .Where(s => s.Type == t)
+                            .Select(s => new {s.Type, s.Value, s.Collected})
+                            .OrderByDescending(s => s.Collected)
+                            .First())
+                    },
+                    geometry = new
+                    {
+                        type = "Polygon",
+                        coordinates = new List<object> {JArray.Parse(r.GeoJson)}
+                    }
+                })
             });
         }
 
         /// <summary>
-        /// <code>GET /api/history/:roomId/:type?start=2016-03-22T12:00:00&[end=2016-04-22T12:00:00]</code>
-        /// Returns calculated average data for a given room during a given time period.
-        /// Data values are averages calculated on hourly basis for timespans under 100 hours,
-        /// and daily basis for timespans of 100 hours or longer.
-        /// 
-        /// Timespan is set using ISO 8601 formatted GET query string parameters:
-        /// <code>start</code> - Beginning of timespan (defaults to Now - 1 week if no value supplied)
-        /// <code>end</code> - End of timespan (defaults to DateTime.Now if no value supplied)
+        ///     <code>GET /api/history/:roomId/:type?start=2016-03-22T12:00:00&[end=2016-04-22T12:00:00]</code>
+        ///     Returns calculated average data for a given room during a given time period.
+        ///     Data values are averages calculated on hourly basis for timespans under 100 hours,
+        ///     and daily basis for timespans of 100 hours or longer.
+        ///     Timespan is set using ISO 8601 formatted GET query string parameters:
+        ///     <code>start</code> - Beginning of timespan (defaults to Now - 1 week if no value supplied)
+        ///     <code>end</code> - End of timespan (defaults to DateTime.Now if no value supplied)
         /// </summary>
-        /// 
         /// Example response:
         /// <code>
         /// {
@@ -196,7 +185,6 @@ namespace api.Controllers
         ///   "data": [25.0, 21.0, 24.0, 22.8]
         /// }
         /// </code>
-        /// 
         /// <param name="roomId">Room ID number</param>
         /// <param name="type">Data type (e.g. humidity)</param>
         [HttpGet("history/{roomId}/{type}")]
@@ -211,11 +199,11 @@ namespace api.Controllers
 
                 // Construct date range from timespans, 
                 var startDate = !string.IsNullOrEmpty(Request.Query["start"])
-                            ? DateTime.Parse(Request.Query["start"])
-                            : DateTime.Now.AddDays(-7);
+                    ? DateTime.Parse(Request.Query["start"])
+                    : DateTime.Now.AddDays(-7);
                 var endDate = !string.IsNullOrEmpty(Request.Query["end"])
-                            ? DateTime.Parse(Request.Query["end"])
-                            : DateTime.Now;
+                    ? DateTime.Parse(Request.Query["end"])
+                    : DateTime.Now;
 
                 // TODO: Improve once Entity Framework Core gets GROUP BY support
                 // Averages are calculated on the same base data, which as of EF Core RC1 Final
@@ -234,14 +222,17 @@ namespace api.Controllers
                 {
                     data = rawData
                         .GroupBy(d => new DateTime(d.Collected.Year, d.Collected.Month, d.Collected.Day))
-                        .Select(d => new { date = d.Key, value = d.Average(s => s.Value) })
+                        .Select(d => new {date = d.Key, value = d.Average(s => s.Value)})
                         .ToDictionary(d => d.date, d => d.value);
                 }
                 else
                 {
                     data = rawData
-                        .GroupBy(d => new DateTime(d.Collected.Year, d.Collected.Month, d.Collected.Day, d.Collected.Hour, 0, 0))
-                        .Select(d => new { date = d.Key, value = d.Average(s => s.Value) })
+                        .GroupBy(
+                            d =>
+                                new DateTime(d.Collected.Year, d.Collected.Month, d.Collected.Day, d.Collected.Hour, 0,
+                                    0))
+                        .Select(d => new {date = d.Key, value = d.Average(s => s.Value)})
                         .ToDictionary(d => d.date, d => d.value);
                 }
 
@@ -252,9 +243,18 @@ namespace api.Controllers
                     data = data.Values
                 });
             }
-            catch (FormatException) { return HttpBadRequest("Dates must be ISO 8601 strings."); }
-            catch (InvalidOperationException) { return HttpNotFound("Room does not exist."); }
-            catch (Exception ex) { return HttpBadRequest("Exception: " + ex + " " + ex.Message); }
+            catch (FormatException)
+            {
+                return HttpBadRequest("Dates must be ISO 8601 strings.");
+            }
+            catch (InvalidOperationException)
+            {
+                return HttpNotFound("Room does not exist.");
+            }
+            catch (Exception ex)
+            {
+                return HttpBadRequest("Exception: " + ex + " " + ex.Message);
+            }
         }
     }
 }

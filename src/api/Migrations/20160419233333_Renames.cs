@@ -1,7 +1,5 @@
-using System;
-using System.Collections.Generic;
-using Microsoft.Data.Entity.Migrations;
 using Microsoft.Data.Entity.Metadata;
+using Microsoft.Data.Entity.Migrations;
 
 namespace api.Migrations
 {
@@ -9,10 +7,10 @@ namespace api.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropPrimaryKey(name: "PK_Floor", table: "Floor");
+            migrationBuilder.DropPrimaryKey("PK_Floor", "Floor");
             migrationBuilder.AddColumn<int>(
-                name: "Id",
-                table: "Floor",
+                "Id",
+                "Floor",
                 nullable: false,
                 defaultValue: 0)
                 .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
@@ -20,10 +18,10 @@ namespace api.Migrations
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropPrimaryKey(name: "PK_Floor", table: "Floor");
-             migrationBuilder.AddColumn<int>(
-                name: "FloorId",
-                table: "Floor",
+            migrationBuilder.DropPrimaryKey("PK_Floor", "Floor");
+            migrationBuilder.AddColumn<int>(
+                "FloorId",
+                "Floor",
                 nullable: false,
                 defaultValue: 0)
                 .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);

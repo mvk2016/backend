@@ -1,15 +1,17 @@
-﻿using Microsoft.AspNet.Builder;
+﻿using System.Net.WebSockets;
+using api.Interfaces;
+using api.Lib;
+using api.Models;
+using api.Services;
+using Microsoft.AspNet.Builder;
 using Microsoft.AspNet.Hosting;
+using Microsoft.Data.Entity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Data.Entity;
-using api.Interfaces;
-using api.Models;
-using api.Services;
-using System.Net.WebSockets;
-using api.Lib;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+
 // ReSharper disable UnusedMember.Global
 
 namespace api
@@ -34,7 +36,7 @@ namespace api
             // Use MVC, and instruct it to print pretty JSON with camelCased property names
             services.AddMvc().AddJsonOptions(opt =>
             {
-                opt.SerializerSettings.Formatting = Newtonsoft.Json.Formatting.Indented;
+                opt.SerializerSettings.Formatting = Formatting.Indented;
                 opt.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
             });
 

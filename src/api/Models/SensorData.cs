@@ -1,11 +1,10 @@
 ﻿using System;
-using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace api.Models
 {
     /// <summary>
-    /// Defines the SensorData data model.
+    ///     Defines the SensorData data model.
     /// </summary>
     public class SensorData
     {
