@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.ServiceBus;
 using Microsoft.ServiceBus.Messaging;
 using api.Interfaces;
+using api.Lib;
 
 namespace api.Services
 {
@@ -38,12 +39,14 @@ namespace api.Services
             try
             {
                 // Process message from queue.
-                Console.WriteLine("Body: " + message.GetBody<string>());
+                var body = message.GetBody<string>();
+                Console.WriteLine("Body: " + body);
                 //Console.WriteLine("MessageID: " + message.MessageId);
                 //Console.WriteLine("Test Property: " + message.Properties["Type"]);
 
                 // Remove message from queue.
                 message.Complete();
+                WebSocketHandler.Broadcast(body);
             }
             catch (Exception)
             {
