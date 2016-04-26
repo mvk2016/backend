@@ -96,7 +96,7 @@ namespace api.Controllers
         }
 
         /// <summary>
-        /// <code>GET /api/buildings/:id/floors/:floor</code>
+        /// <code>GET /api/buildings/:buildingId/floors/:number</code>
         /// Provides a GeoJSON FeatureCollection of a given floor in a given building.
         /// Each feature in the collection represents a room on the map and contains
         /// metadata and sensor data properties, as well as geometry object which specifies
