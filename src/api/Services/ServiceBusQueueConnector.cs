@@ -1,14 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.ServiceBus;
 using Microsoft.ServiceBus.Messaging;
 using api.Interfaces;
 using api.Lib;
 
 namespace api.Services
 {
+    /// <summary>
+    /// Forwards messages from an Azure Service Bus Queue to connected
+    /// WebSocket clients using WebSocketHandler.
+    /// </summary>
+    /// <seealso cref="IRealTimeConnector" />
     public class ServiceBusQueueConnector : IRealTimeConnector
     {
         public ServiceBusQueueConnector()
@@ -16,37 +17,36 @@ namespace api.Services
             Connect();
         }
 
+        /// <summary>
+        /// Connects this instance.
+        /// </summary>
         public void Connect()
         {
+            var client =
+                QueueClient.CreateFromConnectionString(Config.QueueConnectionString);
+
+            // Configure the callback options.
+            var options = new OnMessageOptions
             {
-                string connectionString = Config.QueueConnectionString;
-                
-                QueueClient client =
-                  QueueClient.CreateFromConnectionString(connectionString);
+                AutoComplete = false,
+                AutoRenewTimeout = TimeSpan.FromSeconds(5)
+            };
 
-                // Configure the callback options.
-                OnMessageOptions options = new OnMessageOptions();
-                options.AutoComplete = false;
-                options.AutoRenewTimeout = TimeSpan.FromSeconds(5);
-
-                // Callback to handle received messages.
-                client.OnMessage(OnMessage, options);
-            }
+            // Callback to handle received messages.
+            client.OnMessage(OnMessage, options);
         }
 
-        protected void OnMessage(BrokeredMessage message)
+        private static void OnMessage(BrokeredMessage message)
         {
             try
             {
                 // Process message from queue.
                 var body = message.GetBody<string>();
-                Console.WriteLine("Body: " + body);
-                //Console.WriteLine("MessageID: " + message.MessageId);
-                //Console.WriteLine("Test Property: " + message.Properties["Type"]);
+                Console.WriteLine("Popped from Queue: " + body);
 
                 // Remove message from queue.
-                message.Complete();
                 WebSocketHandler.Broadcast(body);
+                message.Complete();
             }
             catch (Exception)
             {
