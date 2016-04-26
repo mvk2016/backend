@@ -1,0 +1,225 @@
+﻿<html xmlns="http://www.w3.org/1999/xhtml"><head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- For Mobile Devices -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8">
+    <meta name="generator" content="Doxygen 1.8.11">
+    <title>Yanzi SmartMap ASP.NET Web API: api.Controllers.ApiController Class Reference</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+    <style>
+        body { background: #fcfcfc; }
+        body, table, div, p { font-size: 15px; line-height: 165%; }
+        .navbar-default { border: none; }
+        h2.groupheader {
+            padding-bottom: 10px; border-bottom: 2px solid #f0f0f0; color: #777; font-weight: bold; }
+        .panel { border-radius: 0; }
+        pre { padding: 0; border: 0; background: transparent; border-radius: 0; }
+        .footer {
+            width: 100%;
+            height: 60px;
+            background-color: #f5f5f5;
+        }
+        .container .text-muted {
+            margin: 20px 0;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.3.0/styles/monokai-sublime.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.3.0/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</head>
+<body>
+<nav class="navbar navbar-default" role="navigation" style="background: #50b648; border-radius: 0; box-shadow: 0 2px 10px #ddd;">
+    <div class="container">
+        <div class="navbar-header">
+            <a class="navbar-brand" style="font-weight: bold; color: #fff;">Yanzi SmartMap ASP.NET API </a>
+        </div>
+    </div>
+</nav>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+    <div class="content" id="content">
+        <div class="container">
+            <div class="headertitle page-header">
+                <h1 style="font-weight: bold !important; color: #50b648;">Yanzi SmartMap ASP.NET Core Web API Reference</h1>
+            </div>
+            <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+            <div class="textblock">
+                <p>Provides API endpoints for fetching building metadata, floor plans and sensor data.</p>
+                <p>All routes begin with <code>/api/</code></p>
+                <p>This documentation regards the HTTP portion of the ASP.NET backend, and thus does not describe the WebSocket-driven realtime API.</p>
+            </div>
+            <h2 class="groupheader">API Endpoint Documentation</h2>
+            <a class="anchor" id="a1ac42ae6bdfe0e95699bd31039658527"></a>
+            <div class="panel panel-default active">
+                <div class="panel-heading">
+                    <code>GET /api/</code>
+                </div>
+                <div class="panel-body">
+                    <p><strong>Always throws HTTP 400 (Bad Request).</strong></p>
+                </div>
+            </div>
+            <a class="anchor" id="a656241a44971bcd0bfafdf7f1c1b3a26"></a>
+            <div class="panel panel-default active">
+                <div class="panel-heading">
+                    <code>GET /api/buildings</code>
+                </div>
+                <div class="panel-body">
+                    <p><strong>Lists all buildings.</strong></p>
+                    <hr />
+                    <h4>Example response</h4>
+                    <pre><code class="json">{
+  "buildings": [
+    {
+      "id": 871073,
+      "name": "Keflavik"
+    },
+    ...
+  ]
+}</code></pre>
+                </div>
+            </div>
+            <a class="anchor" id="a2a3da37e9d98899ad27c92a8d2bafd59"></a>
+            <div class="panel panel-default active">
+                <div class="panel-heading">
+                    <code>GET /api/buildings/:buildingId</code>
+                </div>
+                <div class="panel-body">
+
+                    <p><strong>Lists all floors for a given building ID.</strong></p>
+
+                    <hr />
+
+                    <h4>Example response</h4>
+<pre><code class="json">{
+  "buildingId": 871073,
+  "floors": [
+    5,
+    6
+  ]
+}</code></pre>
+                    <hr />
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>Parameter Name</th>
+                            <th>Parameter Description</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr><td class="paramname">buildingId</td><td>Building identifier</td></tr>
+                        </tbody>
+                    </table>
+
+                </div>
+            </div>
+            <a class="anchor" id="ab62d083061c20881f54fad0d50e65b9b"></a>
+            <div class="panel panel-default active">
+                <div class="panel-heading">
+                    <code>GET /api/buildings/:id/floors/:floor</code>
+                </div>
+                <div class="panel-body">
+
+                    <p></p>
+                    <p><strong>Provides a GeoJSON FeatureCollection of a given floor in a given building.</strong></p>
+                    <p>Each feature in the collection represents a room on the map and contains metadata and sensor data properties, as well as geometry object which specifies the room's geographical location on a world map using polygon coordinates.</p>
+                    <hr />
+                    <h4>Example response</h4>
+
+<pre><code class="json">{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "roomId": 1,
+        "name": "Conference Room C",
+        "data": [
+          {
+            "collected": "2016-04-19T11:30:00",
+            "type": "temperature",
+            "value": 296.3
+          },
+          ...
+        ]
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            18.073729835450649,
+            59.34676929431086
+          ],
+          ...
+        ]
+      }
+    }
+  ]
+}</code></pre>
+                    <table class="params table">
+                        <thead>
+                        <tr>
+                            <th>Parameter Name</th>
+                            <th>Parameter Description</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr><td class="paramname">buildingId</td><td>Building identifier</td></tr>
+                        <tr><td class="paramname">number</td><td>Floor number</td></tr>
+                        </tbody>
+                    </table>
+
+                </div>
+            </div>
+            <a class="anchor" id="a3228267d0237593221919c4826a942f8"></a>
+            <div class="panel panel-default active">
+                <div class="panel-heading">
+                    <code>GET /api/history/:roomId?start=2016-03-22T12:00:00&amp;[end=2016-04-22T12:00:00]</code>
+                </div><div class="panel-body">
+
+                <p><strong>Returns calculated average data for a given room during a given time period.</strong></p>
+                <p>Data values are averages calculated on hourly basis for timespans under 100 hours, and daily basis for timespans of 100 hours or longer.</p>
+                <hr />
+                <p>Timespan is set using ISO 8601 formatted GET query string parameters:</p>
+                <p><code>start</code> - Beginning of timespan (defaults to Now - 1 week if no value supplied)</p>
+                <p><code>end</code> - End of timespan (defaults to DateTime.Now if no value supplied)</p>
+
+                <hr />
+                <h4>Example response</h4>
+
+<pre><code class="json">{
+  "labels": ["Apr 19", "Apr 21", "Apr 22", "Apr 25"],
+  "datasets": [
+    {
+      "fillColor": "rgba(220,220,220,0.2)",
+      "strokeColor": "rgba(220,220,220,1)",
+      ...
+      "data": [25.0, 21.0, 24.0, 22.8]
+    }
+  ]
+}</code></pre>
+
+                <hr />
+                <table class="params table">
+                    <thead>
+                    <tr>
+                        <th>Parameter Name</th>
+                        <th>Parameter Description</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr><td class="paramname">roomId</td><td>Room ID number</td></tr>
+                    <tr><td class="paramname">type</td><td>Data type (e.g. "humidity")</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            </div>
+        </div><!-- contents -->
+    </div>
+</div>
+
+<footer class="footer">
+    <div class="container">
+        <p class="text-muted">&copy; Copyright Yanzi Networks AB 2016. Confidential, limited to authorized use only.</p>
+    </div>
+</footer>
+
+</body></html>
