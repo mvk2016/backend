@@ -125,10 +125,12 @@ namespace api.Controllers
         ///         "type": "Polygon",
         ///         "coordinates": [
         ///           [
-        ///             18.073729835450649,
-        ///             59.34676929431086
-        ///           ],
-        ///           ...
+        ///             [
+        ///               18.073729835450649,
+        ///               59.34676929431086
+        ///             ],
+        ///             ...
+        ///           ]
         ///         ]
         ///       }
         ///     }
@@ -165,12 +167,12 @@ namespace api.Controllers
                                         .Where(s => s.Type == t)
                                         .Select(s => new { s.Type, s.Value, s.Collected })
                                         .OrderByDescending(s => s.Collected)
-                                        .Take(1))
+                                        .First())
                         },
                         geometry = new
                         {
                             type = "Polygon",
-                            coordinates = JArray.Parse(r.GeoJson)
+                            coordinates = new List<object> {JArray.Parse(r.GeoJson) }
                         }
                     })
             });
