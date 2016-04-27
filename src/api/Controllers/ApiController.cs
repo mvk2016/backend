@@ -143,10 +143,9 @@ namespace api.Controllers
             if (floor == null) return HttpNotFound("Floor does not exist in building");
             if (!roomsOnFloor.Any()) return HttpNotFound("Floor has no rooms");
 
-            return new ObjectResult(new
+            try
             {
-                type = "FeatureCollection",
-                features = roomsOnFloor.Select(r => new
+                var features = roomsOnFloor.Select(r => new
                 {
                     type = "Feature",
                     properties = new
@@ -158,15 +157,32 @@ namespace api.Controllers
                             .Where(s => s.Type == t)
                             .Select(s => new {s.Type, s.Value, s.Collected})
                             .OrderByDescending(s => s.Collected)
-                            .First())
+                            .FirstOrDefault())
+                        .Where(t => t != null)
                     },
                     geometry = new
                     {
                         type = "Polygon",
-                        coordinates = new List<object> {JArray.Parse(r.GeoJson)}
+                        coordinates = new List<object> { JArray.Parse(r.GeoJson) }
                     }
-                })
-            });
+                });
+
+                return new ObjectResult(new
+                {
+                    type = "FeatureCollection",
+                    features
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return new ObjectResult(new
+                {
+                    error = ex.ToString(),
+                    ex = ex.StackTrace,
+                    data = ex.Data,
+                    inner = ex.InnerException
+                });
+            }
         }
 
         /// <summary>
@@ -222,17 +238,14 @@ namespace api.Controllers
                 {
                     data = rawData
                         .GroupBy(d => new DateTime(d.Collected.Year, d.Collected.Month, d.Collected.Day))
-                        .Select(d => new {date = d.Key, value = d.Average(s => s.Value)})
+                        .Select(d => new { date = d.Key, value = d.Average(s => s.Value) })
                         .ToDictionary(d => d.date, d => d.value);
                 }
                 else
                 {
                     data = rawData
-                        .GroupBy(
-                            d =>
-                                new DateTime(d.Collected.Year, d.Collected.Month, d.Collected.Day, d.Collected.Hour, 0,
-                                    0))
-                        .Select(d => new {date = d.Key, value = d.Average(s => s.Value)})
+                        .GroupBy(d => new DateTime(d.Collected.Year, d.Collected.Month, d.Collected.Day, d.Collected.Hour, 0, 0))
+                        .Select(d => new { date = d.Key, value = d.Average(s => s.Value) })
                         .ToDictionary(d => d.date, d => d.value);
                 }
 
@@ -243,18 +256,9 @@ namespace api.Controllers
                     data = data.Values
                 });
             }
-            catch (FormatException)
-            {
-                return HttpBadRequest("Dates must be ISO 8601 strings.");
-            }
-            catch (InvalidOperationException)
-            {
-                return HttpNotFound("Room does not exist.");
-            }
-            catch (Exception ex)
-            {
-                return HttpBadRequest("Exception: " + ex + " " + ex.Message);
-            }
+            catch (FormatException) { return HttpBadRequest("Dates must be ISO 8601 strings."); }
+            catch (InvalidOperationException) { return HttpNotFound("Room does not exist."); }
+            catch (Exception ex) { return HttpBadRequest("Exception: " + ex + " " + ex.Message); }
         }
     }
 }
